@@ -74,39 +74,42 @@ export default function App() {
     generateResult();
   }, [selectedEmoji1, selectedEmoji2]);
 
-// Download combined emoji as PNG
-const downloadImage = () => {
-  const canvas = canvasRef.current;
-  const ctx = canvas.getContext("2d");
-  const size = 128; // Set size for emoji rendering
 
-  if (selectedEmoji1 && selectedEmoji2) {
-    // Set the canvas dimensions
-    canvas.width = size;
-    canvas.height = size;
+  const downloadImage = async () => {
+    if (resultUrl) {
+      try {
+        // Fetch the image from the result URL
+        const response = await fetch(resultUrl);
 
-    // Clear any previous drawings
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+        // Ensure the response is okay
+        if (!response.ok) {
+          throw new Error("Failed to fetch image.");
+        }
 
-    // Set font size for emojis
-    ctx.font = `${size}px Arial`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
+        // Convert the response to a blob
+        const blob = await response.blob();
 
-    // Draw the first emoji (slightly shifted)
-    ctx.fillText(selectedEmoji1, size / 2, size / 2 + 10);
+        // Create a temporary URL for the blob
+        const blobUrl = URL.createObjectURL(blob);
 
-    // Draw the second emoji (overlapping)
-    ctx.fillText(selectedEmoji2, size / 2, size / 2 - 10);
+        // Create a link element for downloading
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.download = "combined-emoji.png"; // Set the filename
 
-    // Convert canvas to data URL for downloading
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = "combined-emoji.png"; // File name for download
-    link.dispatchEvent(new MouseEvent("click")); // Trigger download
-    link.remove(); // Clean up
-  }
-};
+        // Trigger the download
+        link.dispatchEvent(new MouseEvent("click"));
+
+        // Clean up the blob URL
+        URL.revokeObjectURL(blobUrl);
+      } catch (error) {
+        console.error("Error downloading the image:", error);
+        alert("Failed to download the image. Please try again.");
+      }
+    } else {
+      alert("Please select two emojis to combine first!");
+    }
+  };
 
 
   return (
