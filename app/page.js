@@ -74,32 +74,40 @@ export default function App() {
     generateResult();
   }, [selectedEmoji1, selectedEmoji2]);
 
-  // Download combined emoji as PNG
-  const downloadImage = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas.getContext("2d");
-    const size = 128;
+// Download combined emoji as PNG
+const downloadImage = () => {
+  const canvas = canvasRef.current;
+  const ctx = canvas.getContext("2d");
+  const size = 128; // Set size for emoji rendering
 
-    if (selectedEmoji1 && selectedEmoji2) {
-      canvas.width = size * 2 + 10; // Width for two emojis with padding
-      canvas.height = size;
+  if (selectedEmoji1 && selectedEmoji2) {
+    // Set the canvas dimensions
+    canvas.width = size;
+    canvas.height = size;
 
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.font = `${size / 1.5}px Arial`;
+    // Clear any previous drawings
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      // Draw the emojis
-      ctx.fillText(selectedEmoji1, size / 2, size / 2);
-      ctx.fillText(selectedEmoji2, size + size / 2 + 10, size / 2);
+    // Set font size for emojis
+    ctx.font = `${size}px Arial`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
 
-      // Download the canvas as PNG
-      const link = document.createElement("a");
-      link.href = canvas.toDataURL("image/png");
-      link.download = "emoji-combination.png";
-      link.click();
-    }
-  };
+    // Draw the first emoji (slightly shifted)
+    ctx.fillText(selectedEmoji1, size / 2, size / 2 + 10);
+
+    // Draw the second emoji (overlapping)
+    ctx.fillText(selectedEmoji2, size / 2, size / 2 - 10);
+
+    // Convert canvas to data URL for downloading
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "combined-emoji.png"; // File name for download
+    link.dispatchEvent(new MouseEvent("click")); // Trigger download
+    link.remove(); // Clean up
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-5">
