@@ -1,101 +1,172 @@
-import Image from "next/image";
+"use client"
+import { useState, useEffect } from "react";
 
-export default function Home() {
+export default function App() {
+  const emojiList = [
+    "😀", "😃", "😄", "😁", "😆", "😅", "😂", "😊", "🥰", "🤔", "🤩", "🤯", "😎", "😏", "😇",
+  ];
+
+  const [activeBox, setActiveBox] = useState("emoji1");
+  const [selectedEmoji1, setSelectedEmoji1] = useState(null);
+  const [selectedEmoji2, setSelectedEmoji2] = useState(null);
+  const [resultUrl, setResultUrl] = useState(null);
+
+  // Function to encode emoji to Unicode
+  const encodeEmoji = (emoji) => {
+    return Array.from(emoji)
+      .map((char) => char.codePointAt(0).toString(16))
+      .join("_");
+  };
+
+  // Function to generate result URL
+  const generateResult = () => {
+    if (selectedEmoji1 && selectedEmoji2) {
+      const encodedEmoji1 = encodeEmoji(selectedEmoji1);
+      const encodedEmoji2 = encodeEmoji(selectedEmoji2);
+      setResultUrl(
+        `https://emojik.vercel.app/s/${encodedEmoji1}_${encodedEmoji2}?size=128`
+      );
+    } else {
+      setResultUrl(null);
+    }
+  };
+
+  // Handle emoji selection
+  const selectEmoji = (emoji) => {
+    if (activeBox === "emoji1") {
+      setSelectedEmoji1(emoji);
+      setActiveBox("emoji2");
+    } else {
+      setSelectedEmoji2(emoji);
+    }
+  };
+
+  // Randomize emojis (Dice functionality)
+  const randomizeEmojis = () => {
+    const randomEmoji1 = emojiList[Math.floor(Math.random() * emojiList.length)];
+    const randomEmoji2 = emojiList[Math.floor(Math.random() * emojiList.length)];
+    setSelectedEmoji1(randomEmoji1);
+    setSelectedEmoji2(randomEmoji2);
+    setActiveBox("emoji2");
+  };
+
+  const downloadImage = () => {
+    const canvas = canvasRef.current;
+    const link = document.createElement("a");
+    link.href = canvas.toDataURL("image/png");
+    link.download = "emoji-combination.png";
+    link.click();
+  };
+
+  // Clear the selected emoji in a box
+  const clearBox = (box) => {
+    if (box === "emoji1") {
+      setSelectedEmoji1(null);
+    } else {
+      setSelectedEmoji2(null);
+    }
+    setResultUrl(null);
+  };
+
+  // Generate result URL whenever emojis are updated
+  useEffect(() => {
+    generateResult();
+  }, [selectedEmoji1, selectedEmoji2]);
+
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              app/page.js
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+    <div className="min-h-screen bg-gray-100 flex flex-col items-center p-5">
+      <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-lg">
+        <h1 className="text-2xl font-bold text-center text-blue-600 mb-4">
+          Emoji Kitchen
+        </h1>
+        <p className="text-center text-gray-600 mb-6">
+          Combine two emojis to create your own emoji!
+        </p>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        {/* Emoji Selector */}
+        <div className="flex justify-center items-center mb-4 space-x-3">
+          <div
+            className={`emoji-box ${
+              activeBox === "emoji1" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => setActiveBox("emoji1")}
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            {selectedEmoji1 || "❓"}
+          </div>
+          <span className="text-xl font-bold">+</span>
+          <div
+            className={`emoji-box ${
+              activeBox === "emoji2" ? "ring-2 ring-blue-500" : ""
+            }`}
+            onClick={() => setActiveBox("emoji2")}
           >
-            Read our docs
-          </a>
+            {selectedEmoji2 || "❓"}
+          </div>
+          <span className="text-xl font-bold">=</span>
+          <div className="emoji-box">
+            {resultUrl ? (
+              <img
+                src={resultUrl}
+                alt={`${selectedEmoji1} + ${selectedEmoji2}`}
+                className="w-full h-full object-contain"
+              />
+            ) : (
+              "❓"
+            )}
+          </div>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        {/* Buttons */}
+        <div className="flex justify-center space-x-4 mb-6">
+          <button
+            onClick={randomizeEmojis}
+            className="bg-blue-500 text-white py-2 px-4 rounded-lg shadow hover:bg-blue-600"
+          >
+            🎲 Random
+          </button>
+          <button
+            onClick={() =>
+              resultUrl &&
+              (() => {
+                const link = document.createElement("a");
+                link.href = resultUrl;
+                link.download = "emoji-combination.png";
+                link.click();
+              })()
+            }
+            className={`py-2 px-4 rounded-lg shadow ${
+              resultUrl
+                ? "bg-green-500 text-white hover:bg-green-600"
+                : "bg-gray-300 text-gray-500 cursor-not-allowed"
+            }`}
+            disabled={!resultUrl}
+          >
+            Download
+          </button>
+        </div>
+
+        {/* Emoji Grid */}
+        <h4 className="text-center text-lg font-semibold text-gray-700 mb-4">
+          Select an Emoji:
+        </h4>
+        <div className="grid grid-cols-5 gap-3">
+          {emojiList.map((emoji, index) => (
+            <button
+              key={index}
+              onClick={() => selectEmoji(emoji)}
+              className="emoji-tile hover:bg-gray-200"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
+
+// Tailwind styles
+const styles = {
+  emojiBox: `w-16 h-16 border rounded-lg flex justify-center items-center text-3xl bg-gray-50 cursor-pointer hover:bg-gray-100`,
+  emojiTile: `text-xl bg-white rounded-lg shadow-md p-2 flex items-center justify-center cursor-pointer`,
+};
