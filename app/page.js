@@ -1,15 +1,24 @@
 "use client"
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function App() {
+  // const emojiList = [
+  //   "😀", "😃", "😄", "😁", "😆", "😅", "😂", "😊", "🥰", "🤔", "🤩", "🤯", "😎", "😏", "😇",
+  // ];
+
   const emojiList = [
     "😀", "😃", "😄", "😁", "😆", "😅", "😂", "😊", "🥰", "🤔", "🤩", "🤯", "😎", "😏", "😇",
+    "🤓", "🤡", "🤠", "😈", "👿", "🤥", "😷", "🤒", "🤕", "🤑", "🤗", "🤤", "🤧", "😴", "🤪",
+    "😜", "😝", "😛", "🫣", "🫠", "🫥", "🥳", "🥴", "🫡", "🫤", "😬", "🙃", "🫣", "🫠", "🫥",
+    "😌", "🤭", "🤫", "😳", "🥺", "😦", "😧", "😮", "😯", "😲", "😵", "😵‍💫", "🤯", "🤠", "🥸",
+    "🤡", "😺", "😸", "😻", "😽", "🙀", "😿", "😼", "🥺", "😽", "🤧"
   ];
 
   const [activeBox, setActiveBox] = useState("emoji1");
   const [selectedEmoji1, setSelectedEmoji1] = useState(null);
   const [selectedEmoji2, setSelectedEmoji2] = useState(null);
   const [resultUrl, setResultUrl] = useState(null);
+  const canvasRef = useRef(null);
 
   // Function to encode emoji to Unicode
   const encodeEmoji = (emoji) => {
@@ -50,14 +59,6 @@ export default function App() {
     setActiveBox("emoji2");
   };
 
-  const downloadImage = () => {
-    const canvas = canvasRef.current;
-    const link = document.createElement("a");
-    link.href = canvas.toDataURL("image/png");
-    link.download = "emoji-combination.png";
-    link.click();
-  };
-
   // Clear the selected emoji in a box
   const clearBox = (box) => {
     if (box === "emoji1") {
@@ -73,11 +74,39 @@ export default function App() {
     generateResult();
   }, [selectedEmoji1, selectedEmoji2]);
 
+  // Download combined emoji as PNG
+  const downloadImage = () => {
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const size = 128;
+
+    if (selectedEmoji1 && selectedEmoji2) {
+      canvas.width = size * 2 + 10; // Width for two emojis with padding
+      canvas.height = size;
+
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.font = `${size / 1.5}px Arial`;
+
+      // Draw the emojis
+      ctx.fillText(selectedEmoji1, size / 2, size / 2);
+      ctx.fillText(selectedEmoji2, size + size / 2 + 10, size / 2);
+
+      // Download the canvas as PNG
+      const link = document.createElement("a");
+      link.href = canvas.toDataURL("image/png");
+      link.download = "emoji-combination.png";
+      link.click();
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center p-5">
+      <canvas ref={canvasRef} style={{ display: "none" }}></canvas>
       <div className="bg-white rounded-lg shadow-md p-6 w-full max-w-lg">
         <h1 className="text-2xl font-bold text-center text-blue-600 mb-4">
-          Emoji Kitchen
+          Comoji
         </h1>
         <p className="text-center text-gray-600 mb-6">
           Combine two emojis to create your own emoji!
@@ -86,18 +115,16 @@ export default function App() {
         {/* Emoji Selector */}
         <div className="flex justify-center items-center mb-4 space-x-3">
           <div
-            className={`emoji-box ${
-              activeBox === "emoji1" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`emoji-box ${activeBox === "emoji1" ? "ring-2 ring-blue-500" : ""
+              }`}
             onClick={() => setActiveBox("emoji1")}
           >
             {selectedEmoji1 || "❓"}
           </div>
           <span className="text-xl font-bold">+</span>
           <div
-            className={`emoji-box ${
-              activeBox === "emoji2" ? "ring-2 ring-blue-500" : ""
-            }`}
+            className={`emoji-box ${activeBox === "emoji2" ? "ring-2 ring-blue-500" : ""
+              }`}
             onClick={() => setActiveBox("emoji2")}
           >
             {selectedEmoji2 || "❓"}
@@ -125,21 +152,12 @@ export default function App() {
             🎲 Random
           </button>
           <button
-            onClick={() =>
-              resultUrl &&
-              (() => {
-                const link = document.createElement("a");
-                link.href = resultUrl;
-                link.download = "emoji-combination.png";
-                link.click();
-              })()
-            }
-            className={`py-2 px-4 rounded-lg shadow ${
-              resultUrl
-                ? "bg-green-500 text-white hover:bg-green-600"
-                : "bg-gray-300 text-gray-500 cursor-not-allowed"
-            }`}
-            disabled={!resultUrl}
+            onClick={downloadImage}
+            className={`py-2 px-4 rounded-lg shadow ${selectedEmoji1 && selectedEmoji2
+              ? "bg-green-500 text-white hover:bg-green-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+              }`}
+            disabled={!selectedEmoji1 || !selectedEmoji2}
           >
             Download
           </button>
@@ -164,9 +182,3 @@ export default function App() {
     </div>
   );
 }
-
-// Tailwind styles
-const styles = {
-  emojiBox: `w-16 h-16 border rounded-lg flex justify-center items-center text-3xl bg-gray-50 cursor-pointer hover:bg-gray-100`,
-  emojiTile: `text-xl bg-white rounded-lg shadow-md p-2 flex items-center justify-center cursor-pointer`,
-};
